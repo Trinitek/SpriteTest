@@ -47,33 +47,71 @@ main:
     jmp main
     
 proc_calcPosition:
-    ; bl:0 == going left, bl:1 == going right
-    cmp bl, 0
-    jz .goingLeft
+    ; bl:0=0 == going left, bl:0=1 == going right
+    ; bl:1=0 == going up, bl:1=1 == going down
+    ;cmp bl, 0
+    push ax
     
-    .goingRight:
-    cmp dx, 320-50
-    je .goLeft
-    inc dx
-    jmp .end
+    .testVertical:
+        ; If vertical direciton bit not set, sprite is going up
+        mov al, bl
+        and al, 00000010b
+        jz .goingUp
+        
+        .goingDown:
+        cmp bh, 200-50
+        je .goUp
+        inc bh
+        jmp .testHorizontal
+        
+            .goUp:
+            sub bl, 00000010b
+            dec bh
+            jmp .testHorizontal
+            
+        .goingUp:
+        cmp bh, 0
+        je .goDown
+        dec bh
+        jmp .testHorizontal
+        
+            .goDown:
+            add bl, 00000010b
+            inc bh
+            jmp .testHorizontal
     
-        .goLeft:
-        mov bl, 0
-        dec dx
-        jmp .end
-    
-    .goingLeft:
-    cmp dx, 0
-    je .goRight
-    dec dx
-    jmp .end
-    
-        .goRight:
-        mov bl, 1
+    .testHorizontal:
+        ; If horizontal direction bit not set, sprite is going left
+        mov al, bl
+        and al, 00000001b
+        jz .goingLeft
+        
+        .goingRight:
+        cmp dx, 320-50
+        je .goLeft
         inc dx
         jmp .end
+        
+            .goLeft:
+            ;mov bl, 0
+            sub bl, 00000001b
+            dec dx
+            jmp .end
+        
+        .goingLeft:
+        cmp dx, 0
+        je .goRight
+        dec dx
+        jmp .end
+        
+            .goRight:
+            ;mov bl, 1
+            add bl, 00000001b
+            inc dx
+            jmp .end
     
     .end:
+    pop ax
     ret
 
 proc_drawSprite:
