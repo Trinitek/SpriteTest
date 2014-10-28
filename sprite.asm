@@ -1,11 +1,13 @@
 format MZ
 entry seg_code:start
+    ;org 0x100
 
 segment seg_code
 
 start:
-    mov ax, cs  ; data segment should be the same as this code segment
+    mov ax, seg_data
     mov ds, ax
+    mov es, ax
 	mov	ax, 0x13
 	int	0x10
 
@@ -38,14 +40,13 @@ setSpriteColors:
 
 setupPointers:
     ; Setup pointer to secondary video buffer
-    ;mov ax, ds
-    ;add ax, seg_buffer
     mov ax, seg_buffer
     mov es, ax
     xor dx, dx
+    xor bx, bx
     
 main:
-    call proc_drawImage
+    ;call proc_drawImage
     call proc_calcPosition
     call proc_drawSprite
     call proc_showBuffer
@@ -57,20 +58,27 @@ main:
 proc_showBuffer:
     push ax
     push cx
-    push ds         ; pusha does not preserve segment registers
+    push si
+    push di
+    push ds
     push es
     
-    mov ax, es      ; Buffer segment is now the source
+    mov ax, seg_buffer  ; Buffer segment is now the source
     mov ds, ax
-    mov ax, 0x0A000 ; Video memory segment is now the destination
+    
+    mov ax, 0xA000      ; Video memory segment is now the destination
     mov es, ax
+    
     xor di, di
     xor si, si
+    
     mov cx, 320*200
     rep movsb
     
     pop es
     pop ds
+    pop di
+    pop si
     pop cx
     pop ax
     ret
@@ -214,7 +222,9 @@ exit:
 	mov	ax, 0x03
 	int	0x10
 	ret
-
+    
+segment seg_data
+    
 palette:
     .image:
         file 'image.pal'
@@ -228,5 +238,4 @@ image:
         file 'ball.pxl'
 
 segment seg_buffer
-
-db 320*200 dup (0)
+db 5,1,7,5,9,8,1,3,5,1,5,6,4,8,5,3,5,1
