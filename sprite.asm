@@ -65,6 +65,7 @@ proc_calcPosition:
         jmp .testHorizontal
         
             .goUp:
+            ; Clear direction bit: mark as going up
             sub bl, 00000010b
             dec bh
             jmp .testHorizontal
@@ -76,6 +77,7 @@ proc_calcPosition:
         jmp .testHorizontal
         
             .goDown:
+            ; Set direction bit: mark as going down
             add bl, 00000010b
             inc bh
             jmp .testHorizontal
@@ -93,7 +95,7 @@ proc_calcPosition:
         jmp .end
         
             .goLeft:
-            ;mov bl, 0
+            ; Clear direction bit: mark as going left
             sub bl, 00000001b
             dec dx
             jmp .end
@@ -105,7 +107,7 @@ proc_calcPosition:
         jmp .end
         
             .goRight:
-            ;mov bl, 1
+            ; Set direction bit: mark as going right
             add bl, 00000001b
             inc dx
             jmp .end
@@ -118,8 +120,15 @@ proc_drawSprite:
     pusha
     ; Update image data source and destination
     mov si, image.ball
+    ; bh contains the vertical offset
     ; dx contains the horizontal offset
-    mov di, dx
+    push dx     ; dx is destroyed when multiplier is a word
+    mov al, bh
+    mov cx, 320
+    mul cx      ; vertical offset
+    pop dx
+    add ax, dx  ; horizontal offset
+    mov di, ax
     
     mov cx, 50
     .nextLine:
