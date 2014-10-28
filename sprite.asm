@@ -18,21 +18,35 @@ setPalette:
 	out	dx, al
 	loop	.writeRGB
 
+setSpriteColors:
+    ; ball.pxl data aligns to its local palette, not the global palette
+    ; so, add however many palette entries there are before it to offset it
+    mov si, image.ball
+    mov di, si
+    mov cx, 50*50
+    
+    .updatePixel:
+    lodsb
+    add al, (palette.ball - palette.image) / 3
+    stosb
+    loop .updatePixel
+
+setupPointers:
     ; Setup video pointer
     mov	ax, 0xA000
 	mov	es, ax
     xor dx, dx
     
 main:
-    call drawImage
-    call calcPosition
-    call drawSprite
+    call proc_drawImage
+    call proc_calcPosition
+    call proc_drawSprite
     mov cx, 65535
     .empty:
     loop .empty
     jmp main
     
-calcPosition:
+proc_calcPosition:
     ; bl:0 == going left, bl:1 == going right
     cmp bl, 0
     jz .goingLeft
@@ -62,7 +76,7 @@ calcPosition:
     .end:
     ret
 
-drawSprite:
+proc_drawSprite:
     pusha
     ; Update image data source and destination
     mov si, image.ball
@@ -73,7 +87,22 @@ drawSprite:
     .nextLine:
     push cx
     mov cx, 50
-    rep movsb
+    
+        .putPixel:
+        lodsb
+        ; If the pixel is part of the white background, don't draw it
+        ; First pixel of the sprite is the background color
+        cmp al, byte [image.ball]
+        je .skip
+        stosb
+        jmp .cont
+        
+        .skip:
+        inc di
+        
+        .cont:
+        loop .putPixel
+    
     add di, 320-50
     pop cx
     loop .nextLine
@@ -82,7 +111,7 @@ drawSprite:
     popa
     ret
     
-drawImage:
+proc_drawImage:
     pusha
 	xor	di, di
 	mov	cx, 32000	; (320*200)/2
@@ -97,7 +126,7 @@ drawImage:
 	shl	al, 4		; write low nibble...
 	shr	al, 4
 	stosb
-	loop	.unpack
+	loop .unpack
     
     .end:
     popa
