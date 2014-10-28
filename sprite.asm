@@ -46,7 +46,7 @@ setupPointers:
     xor bx, bx
     
 main:
-    ;call proc_drawImage
+    call proc_drawImage
     call proc_calcPosition
     call proc_drawSprite
     call proc_showBuffer
@@ -159,6 +159,7 @@ proc_drawSprite:
     mov si, image.ball
     ; bh contains the vertical offset
     ; dx contains the horizontal offset
+    xor ax, ax
     push dx     ; dx is destroyed when multiplier is a word
     mov al, bh
     mov cx, 320
@@ -238,4 +239,4 @@ image:
         file 'ball.pxl'
 
 segment seg_buffer
-db 5,1,7,5,9,8,1,3,5,1,5,6,4,8,5,3,5,1
+db 320*200 dup (0)
