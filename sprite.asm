@@ -1,6 +1,11 @@
-	org 0x100
+format MZ
+entry seg_code:start
+
+segment seg_code
 
 start:
+    mov ax, cs  ; data segment should be the same as this code segment
+    mov ds, ax
 	mov	ax, 0x13
 	int	0x10
 
@@ -32,19 +37,43 @@ setSpriteColors:
     loop .updatePixel
 
 setupPointers:
-    ; Setup video pointer
-    mov	ax, 0xA000
-	mov	es, ax
+    ; Setup pointer to secondary video buffer
+    ;mov ax, ds
+    ;add ax, seg_buffer
+    mov ax, seg_buffer
+    mov es, ax
     xor dx, dx
     
 main:
     call proc_drawImage
     call proc_calcPosition
     call proc_drawSprite
+    call proc_showBuffer
     mov cx, 65535
     .empty:
     loop .empty
     jmp main
+    
+proc_showBuffer:
+    push ax
+    push cx
+    push ds         ; pusha does not preserve segment registers
+    push es
+    
+    mov ax, es      ; Buffer segment is now the source
+    mov ds, ax
+    mov ax, 0x0A000 ; Video memory segment is now the destination
+    mov es, ax
+    xor di, di
+    xor si, si
+    mov cx, 320*200
+    rep movsb
+    
+    pop es
+    pop ds
+    pop cx
+    pop ax
+    ret
     
 proc_calcPosition:
     ; bl:0=0 == going left, bl:0=1 == going right
@@ -197,3 +226,7 @@ image:
         file 'image.pxl'
     .ball:
         file 'ball.pxl'
+
+segment seg_buffer
+
+db 320*200 dup (0)
